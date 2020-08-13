@@ -29,12 +29,15 @@ V(I,3):	z vertex information
 """
 # all the not useful fields will be filled with 99
 
+import ROOT
 from ROOT import TGenPhaseSpace, TLorentzVector, TVector3, TDatabasePDG, TMath, TH2F
 
 import math
 import numpy as np
 from random import random as rndm
 from array import array
+
+import gzip
 
 dbpdg = TDatabasePDG()
 
@@ -43,13 +46,14 @@ dbpdg = TDatabasePDG()
 
 BeamPolarization = -1 # not useful
 
-BeamEnergy = 6.5
+BeamEnergy = 20
+HBeamEnergy = 250
 TargetMass = dbpdg.GetParticle( 2212 ).Mass()
 LeptonMass = dbpdg.GetParticle( 11 ).Mass()
 
 
 beam   = TLorentzVector( 0, 0, -math.sqrt(BeamEnergy**2-LeptonMass**2), BeamEnergy )
-target = TLorentzVector( 0, 0, 0, TargetMass )
+target = TLorentzVector( 0, 0, math.sqrt(HBeamEnergy**2-TargetMass**2), HBeamEnergy )
 CME    = beam + target
 
 PDGmother = 223
@@ -65,25 +69,25 @@ gPDGs = [ 22, 22 ]
 gMasses = [ dbpdg.GetParticle(i).Mass() for i in gPDGs ]
 
 # electron polar angle cuts
-ThetaMin=math.radians(4.0)
-ThetaMax=math.radians(40.0)
+ThetaMin=math.radians(0)
+ThetaMax=math.radians(180.0)
 
 # proton polar angle cuts
-PThetaMin=math.radians(35.0)
-PThetaMax=math.radians(120.0)
+PThetaMin=math.radians(0)
+PThetaMax=math.radians(180.0)
 
 # vertex
-VxMin = -.171
-VxMax = -.171
+VxMin = 0
+VxMax = 0
 
-VyMin =  0.1
-VyMax =  0.1
+VyMin =  0
+VyMax =  0
 
-VzMin = -2.5
-VzMax =  2.5
+VzMin = 0
+VzMax = 0
 
 
-NEVENTS= 1000
+NEVENTS= 50000
 
 ## FileName
 fname = "phasespace_"
@@ -92,6 +96,9 @@ fname += "_E{:g}".format(BeamEnergy);
 for p in PDGs:
   fname += "_" +  dbpdg.GetParticle(p).GetName()
 fname += ".txt"
+
+seed = 1113
+ROOT.gRandom = ROOT.TRandom3(seed)
 
 def storeParticle(  pdg, vm, vertex, state, par=0, daug1=0, daug2=0 ):
   particle = [0]*14
@@ -186,7 +193,7 @@ def applyCuts( particles ):
   return test
 
 # generate
-with open(fname,"w") as fout:
+with gzip.open(fname+".gz","wt") as fout:
 
   # generate event
   Event = TGenPhaseSpace()

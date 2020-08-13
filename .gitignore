@@ -1,3 +1,7 @@
 *.root
 *.txt
 tmp
+*.png
+*.gz
+*.log
+*.err

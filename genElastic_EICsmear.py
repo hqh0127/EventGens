@@ -29,7 +29,8 @@ V(I,3):	z vertex information
 """
 # all the not useful fields will be filled with 99
 
-from ROOT import TGenPhaseSpace, TLorentzVector, TVector3, TDatabasePDG, TMath, TH2F
+import ROOT
+from ROOT import TGenPhaseSpace, TLorentzVector, TVector3, TDatabasePDG, TMath, TH2F, gRandom, TRandom3
 
 import math
 import numpy as np
@@ -43,42 +44,47 @@ dbpdg = TDatabasePDG()
 
 BeamPolarization = -1 # not useful
 
-BeamEnergy = 6.5
+BeamEnergy = 10
+HBeamEnergy = 100
 TargetMass = dbpdg.GetParticle( 2212 ).Mass()
 LeptonMass = dbpdg.GetParticle( 11 ).Mass()
 
 
 beam   = TLorentzVector( 0, 0, -math.sqrt(BeamEnergy**2-LeptonMass**2), BeamEnergy )
-target = TLorentzVector( 0, 0, 0, TargetMass )
+target = TLorentzVector( 0, 0, math.sqrt(HBeamEnergy**2-TargetMass**2), HBeamEnergy )
 CME    = beam + target
 
 FSPDGs   = [ 11 , 2212  ]
 FSMasses = [  dbpdg.GetParticle(i).Mass() for i in FSPDGs ]
 
 # electron polar angle cuts
-ThetaMin=math.radians(4.0)
-ThetaMax=math.radians(40.0)
+ThetaMin=math.radians(0)
+ThetaMax=math.radians(180)
 
 # proton polar angle cuts
-PThetaMin=math.radians(35.0)
-PThetaMax=math.radians(120.0)
+PThetaMin=math.radians(0)
+PThetaMax=math.radians(180.0)
 
 # vertex
-VxMin = -.171
-VxMax = -.171
+VxMin = 0
+VxMax = 0
 
-VyMin =  0.1
-VyMax =  0.1
+VyMin = 0
+VyMax = 0
 
-VzMin = -2.5
-VzMax =  2.5
+VzMin = 0
+VzMax = 0
 
 
-NEVENTS= 1000
+NEVENTS= 50000
 
 ## FileName
 fname = "elastic_E6.5_vx-0171vy01"
 fname += ".txt"
+
+seed = 1112
+
+ROOT.gRandom = TRandom3(seed)
 
 def storeParticle(  pdg, vm, vertex, state, par=0, daug1=0, daug2=0 ):
   particle = [0]*14
@@ -116,6 +122,8 @@ def applyCuts( particles ):
   test = True
   pdic = {}
   for p in particles:
+    if p[1]>1:
+      continue
     if p[2] in pdic:
       pdic[ p[2]+1000 ] = TVector3( p[6], p[7], p[8] )
     else:
